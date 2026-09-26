@@ -12,8 +12,15 @@ export async function POST(request: Request) {
     const memberships = (data ?? []) as Membership[];
     const results = await Promise.all(memberships.map(async (item) => {
       if (!item.telegram_user_id) {
+        // Member ini tidak pernah membuka link bot-nya, jadi tidak ada yang
+        // bisa dikeluarkan dari grup — tandai selesai. Tanpa kick_processed_at,
+        // claim_expired_memberships() akan mengambil baris ini lagi tiap menit
+        // selamanya, dan jumlahnya menumpuk seiring bertambahnya pendaftar.
         const reason = "NO_TELEGRAM_USER_ID";
-        await supabase.from("memberships").update({ kick_last_error: reason }).eq("id", item.id);
+        await supabase
+          .from("memberships")
+          .update({ kick_processed_at: new Date().toISOString(), kick_last_error: reason })
+          .eq("id", item.id);
         return { id: item.id, kicked: false, reason };
       }
       try {
