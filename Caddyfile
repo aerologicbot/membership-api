@@ -1,0 +1,15 @@
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000
+
+	# Halaman pendaftaran memuat data pribadi; jangan sampai tersimpan di
+	# cache perantara mana pun.
+	header {
+		Cache-Control "no-store"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

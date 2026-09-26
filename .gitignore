@@ -6,3 +6,8 @@ out/
 *.log
 .DS_Store
 .tools/
+
+# Berkas yang dibuat ulang tiap build/dev, jadi selalu muncul sebagai
+# perubahan palsu di git status. Sama seperti di aerologicbot-web-app.
+*.tsbuildinfo
+next-env.d.ts

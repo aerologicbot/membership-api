@@ -2,11 +2,35 @@ services:
   app:
     build: .
     env_file: .env
+    restart: unless-stopped
+    # Tidak dipublikasikan ke internet: hanya Caddy (jaringan internal compose)
+    # dan cron di host lewat 127.0.0.1 yang boleh menyentuhnya.
     ports:
       - "127.0.0.1:3000:3000"
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+
+  # Terminasi HTTPS. Caddy mengurus sertifikat Let's Encrypt sendiri, termasuk
+  # perpanjangannya — tidak ada certbot yang perlu dijadwalkan.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Diisi di .env: DOMAIN=api.aerologic.id
+      DOMAIN: ${DOMAIN:?DOMAIN belum diisi di .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
