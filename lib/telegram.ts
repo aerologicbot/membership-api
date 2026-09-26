@@ -20,16 +20,6 @@ export function sendMessage(chatId: number, text: string, extra: Record<string, 
   return telegram("sendMessage", { chat_id: chatId, text, ...extra });
 }
 
-export function requestContact(chatId: number) {
-  return sendMessage(chatId, "Bagikan kontak Telegram kamu untuk memverifikasi membership.", {
-    reply_markup: {
-      keyboard: [[{ text: "Bagikan kontak", request_contact: true }]],
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    },
-  });
-}
-
 export function createInviteLink() {
   return telegram<{ invite_link: string }>("createChatInviteLink", {
     chat_id: env().TELEGRAM_GROUP_ID,
@@ -39,6 +29,8 @@ export function createInviteLink() {
   });
 }
 
+// Ban lalu unban: user langsung keluar grup tapi tidak diblokir permanen,
+// jadi bisa masuk lagi lewat invite baru setelah perpanjangan.
 export async function removeAndAllowRejoin(userId: number) {
   await telegram("banChatMember", { chat_id: env().TELEGRAM_GROUP_ID, user_id: userId, revoke_messages: false });
   await telegram("unbanChatMember", { chat_id: env().TELEGRAM_GROUP_ID, user_id: userId, only_if_banned: true });

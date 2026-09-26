@@ -1,25 +1,31 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { normalizeIndonesianPhone } from "@/lib/phone";
-import type { Membership } from "@/lib/types";
-
-export async function findByPhone(phone: string) {
-  const normalized = normalizeIndonesianPhone(phone);
-  const { data, error } = await getSupabaseAdmin().from("memberships").select("*").eq("telegram_phone", normalized).maybeSingle();
-  if (error) throw error;
-  return data as Membership | null;
-}
+import type { Member, Membership } from "@/lib/types";
 
 export async function findByTelegramUserId(userId: number) {
-  const { data, error } = await getSupabaseAdmin().from("memberships").select("*").eq("telegram_user_id", userId).maybeSingle();
+  const { data, error } = await getSupabaseAdmin()
+    .from("memberships")
+    .select("*")
+    .eq("telegram_user_id", userId)
+    .maybeSingle();
   if (error) throw error;
   return data as Membership | null;
 }
 
-export function effectiveStatus(membership: Membership) {
-  return membership.status === "ACTIVE" && new Date(membership.expired_at).getTime() > Date.now() ? "ACTIVE" : "EXPIRED";
+export async function findByMemberEmail(email: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from("memberships")
+    .select("*, members!inner(email)")
+    .eq("members.email", email.trim().toLowerCase())
+    .maybeSingle();
+  if (error) throw error;
+  return data as (Membership & { members: Pick<Member, "email"> }) | null;
 }
 
-export async function bindTelegramUser(membershipId: string, userId: number) {
-  const { error } = await getSupabaseAdmin().from("memberships").update({ telegram_user_id: userId }).eq("id", membershipId);
-  if (error) throw error;
+// Status kolom baru berubah permanen saat cron jalan, jadi baris yang
+// expired_at-nya sudah lewat tapi belum tersentuh cron tetap harus dibaca
+// sebagai EXPIRED oleh pemanggil.
+export function effectiveStatus(membership: Membership) {
+  return membership.status === "ACTIVE" && new Date(membership.expired_at).getTime() > Date.now()
+    ? "ACTIVE"
+    : "EXPIRED";
 }
