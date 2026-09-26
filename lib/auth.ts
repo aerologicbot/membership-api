@@ -13,7 +13,5 @@ export function isCronAuthorized(request: Request) {
 }
 
 export function isTelegramAuthorized(request: Request) {
-  const expected = env().TELEGRAM_WEBHOOK_SECRET;
-  if (!expected) return true;
-  return safeEqual(request.headers.get("x-telegram-bot-api-secret-token") ?? "", expected);
+  return safeEqual(request.headers.get("x-telegram-bot-api-secret-token") ?? "", env().TELEGRAM_WEBHOOK_SECRET);
 }

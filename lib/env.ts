@@ -6,7 +6,10 @@ const serverEnvSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_GROUP_ID: z.string().regex(/^-?\d+$/),
   CRON_SECRET: z.string().min(16),
-  TELEGRAM_WEBHOOK_SECRET: z.string().min(1).optional(),
+  // Wajib, bukan opsional: kalau kosong, webhook akan menerima update dari
+  // siapa pun yang tahu URL-nya — dan update palsu cukup untuk mengklaim
+  // token orang lain lalu memanen undangan grup VIP.
+  TELEGRAM_WEBHOOK_SECRET: z.string().min(16),
   // Username bot tanpa "@" — dipakai membangun link t.me/<bot>?start=<token>
   // yang diberikan ke user setelah membayar.
   TELEGRAM_BOT_USERNAME: z
